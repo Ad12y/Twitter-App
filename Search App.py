@@ -1,4 +1,24 @@
 # Databricks notebook source
+# Start Time of Time Period
+dbutils.widgets.text("time_period_start", "2010-03-22 11:49:18", "Start Time of Time Period")
+
+# End Time of Time Period
+dbutils.widgets.text("time_period_end", "2020-04-25 14:48:35", "End Time of Time Period")
+
+# Keyword/Hashtag Search
+dbutils.widgets.text("keyword", "Modi", "Keyword/Hashtag Search")
+
+# Username Search
+dbutils.widgets.text("username", "", "Username Search")
+
+# Sorting Parameter
+dbutils.widgets.dropdown("param_name", "retweet_count", ["retweet_count","followers_count", "favourites_count", "friends_count", "reply_count"], "Sorting Parameter")
+
+# Choose Order
+dbutils.widgets.dropdown("order", "Descending", ["Descending", "Ascending"], "Choose Order")
+
+# COMMAND ----------
+
 from pyspark.sql.functions import col, to_timestamp, collect_list
 from datetime import datetime
 import pandas as pd
@@ -315,7 +335,7 @@ class TwitterDataProcessor:
 
 # Define MongoDB URI and JDBC URL
 mongo_uri = "mongodb+srv://as4622:Gateway!123@cluster0.nbxrocy.mongodb.net/?retryWrites=true&w=majority"
-jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30"
+jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=3600"
 
 # Create TwitterDataProcessor instance
 twitter_processor = TwitterDataProcessor(spark, mongo_uri, jdbc_url)
@@ -368,7 +388,6 @@ else:
 
     # Collect top 5 records as list of dictionaries
     top_records = selected_columns.collect()
-    display(top_records)
 
     tweets_lst = []
     for record in top_records:
@@ -377,5 +396,3 @@ else:
 
 for tweet in cache_dic[parameter_name][0:15]:
     displayHTML(twitter_processor.generate_tweet_html(tweet))
-
-#display(twitter_processor.df_user_tweets)
