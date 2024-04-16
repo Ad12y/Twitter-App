@@ -22,6 +22,7 @@ dbutils.widgets.dropdown("order", "Descending", ["Descending", "Ascending"], "Ch
 from pyspark.sql.functions import col, to_timestamp, collect_list
 from datetime import datetime
 import pandas as pd
+import requests
 
 class TwitterDataProcessor:
     def __init__(self, spark, mongo_uri, jdbc_url):
@@ -74,6 +75,13 @@ class TwitterDataProcessor:
     def sort_user_tweets(self, filtered_twitter_df):
         ascending = True if self.order == "Ascending" else False
         return filtered_twitter_df.sort(self.param_name, ascending=ascending)
+    
+    def is_valid_image(self, url):
+        try:
+            response = requests.head(url)
+            return response.status_code == 200
+        except requests.RequestException:
+            return False
 
     def apply_filters(self):
         filtered_df_tweets = self.filter_tweets_by_keyword(self.df_tweets)
@@ -178,6 +186,13 @@ class TwitterDataProcessor:
                                     f'</div>' \
                                     f'</div>' \
                                     f'</li>'
+        # Check if the profile image URL is valid
+        if user_profile_image_url and self.is_valid_image(user_profile_image_url):
+            # Use the profile image URL
+            pass
+        else:
+            # Use default image URL
+            user_profile_image_url = 'https://www.pngarts.com/files/10/Default-Profile-Picture-PNG-Transparent-Image.png'
 
         html_content = f"""
         <div style="border: 1px solid #ccc; border-radius: 15px; padding: 15px; margin: 20px 0; background-color: #f5f8fa;">
@@ -314,7 +329,7 @@ html = '''<!DOCTYPE html>
 
 # Define MongoDB URI and JDBC URL
 mongo_uri = "mongodb+srv://as4622:Gateway!123@cluster0.nbxrocy.mongodb.net/?retryWrites=true&w=majority"
-jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=3600"
+jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30"
 
 # Create TwitterDataProcessor instance
 twitter_processor = TwitterDataProcessor(spark, mongo_uri, jdbc_url)
