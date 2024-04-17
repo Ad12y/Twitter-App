@@ -9,6 +9,8 @@ from datetime import datetime
 import pandas as pd
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, LongType
+import os
 
 class DataProcessor:
     def __init__(self, spark, file_path):
@@ -71,6 +73,7 @@ class DataProcessor:
     
     def process_data(self):
         with open(self.file_path, 'r') as file:
+            count = 0
             for line in file:
                 if line != '\n':
                     python_dict = json.loads(self.replace_null_false_true(line))
@@ -86,30 +89,43 @@ class DataProcessor:
                     except:
                         tweet_obj["retweet_id"] = None
                         pass
-                    self.list_of_user_dic.append(user_obj)
-                    self.list_of_tweets_dic.append(tweet_obj)
+                    #self.list_of_user_dic.append(user_obj)
+                    #self.list_of_tweets_dic.append(tweet_obj)
+                    self.write_to_sql_server(tweet_obj)
+                    self.write_to_mongodb(user_obj)
+                    print(count)
+                    count += 1
     
-    def write_to_sql_server(self):
-        df_tweet = self.spark.createDataFrame(data = self.list_of_tweets_dic).dropDuplicates(['tweet_id'])
-        jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30"
+    def write_to_sql_server(self, tweet_obj):
+
+        # Define the schema for the tweet data
+        schema = StructType([
+            StructField("tweet_id", LongType(), True),
+            StructField("user_id", LongType(), True),
+            StructField("created_at", TimestampType(), True),
+            StructField("text", StringType(), True),
+            StructField("source", StringType(), True),
+            StructField("quote_count", LongType(), True),
+            StructField("reply_count", LongType(), True),
+            StructField("retweet_count", LongType(), True),
+            StructField("favorite_count", LongType(), True),
+            StructField("filter_level", StringType(), True),
+            StructField("lang", StringType(), True),
+            StructField("retweet_id", LongType(), True)
+        ])
+
+        df_tweet = self.spark.createDataFrame([tweet_obj], schema = schema)
         connection_properties = {
             "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver"
         }
-        df_tweet.write.jdbc(url=jdbc_url, table="tweet", mode="overwrite", properties=connection_properties)
+        df_tweet.write.jdbc(url=os.environ.get("JDBC_URL"), table="tweet", mode="append", properties=connection_properties)
     
-    def write_to_mongodb(self):
-        client = MongoClient("mongodb+srv://as4622:Gateway!123@cluster0.nbxrocy.mongodb.net/?retryWrites=true&w=majority",
-                             server_api=ServerApi('1'))
+    def write_to_mongodb(self, user_obj):
+        client = MongoClient(os.environ.get("MONGO_URI"), server_api=ServerApi('1'))
         db = client['Twitter']
-        data = pd.DataFrame(self.list_of_user_dic).drop_duplicates(subset=['user_id']).to_dict(orient='records')
         collection = db['Users']
-        collection.insert_many(data)
-        print("Data loaded into MongoDB successfully.")
-
+        collection.update_one({"user_id": user_obj["user_id"]}, {"$set": user_obj}, upsert=True)
 # Usage
 file_path = '/dbfs/FileStore/shared_uploads/as4622@scarletmail.rutgers.edu/corona_out_3'
 data_processor = DataProcessor(spark, file_path)
 data_processor.process_data()
-data_processor.write_to_sql_server()
-data_processor.write_to_mongodb()
-
