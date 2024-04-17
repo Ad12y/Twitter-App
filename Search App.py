@@ -23,6 +23,7 @@ from pyspark.sql.functions import col, to_timestamp, collect_list
 from datetime import datetime
 import pandas as pd
 import requests
+import os
 
 class TwitterDataProcessor:
     def __init__(self, spark, mongo_uri, jdbc_url):
@@ -328,8 +329,8 @@ html = '''<!DOCTYPE html>
 '''
 
 # Define MongoDB URI and JDBC URL
-mongo_uri = "mongodb+srv://as4622:Gateway!123@cluster0.nbxrocy.mongodb.net/?retryWrites=true&w=majority"
-jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30"
+mongo_uri = os.environ.get("MONGO_URI")
+jdbc_url = os.environ.get("JDBC_URL")
 
 # Create TwitterDataProcessor instance
 twitter_processor = TwitterDataProcessor(spark, mongo_uri, jdbc_url)
