@@ -73,7 +73,6 @@ class DataProcessor:
     
     def process_data(self):
         with open(self.file_path, 'r') as file:
-            count = 0
             for line in file:
                 if line != '\n':
                     python_dict = json.loads(self.replace_null_false_true(line))
@@ -89,12 +88,8 @@ class DataProcessor:
                     except:
                         tweet_obj["retweet_id"] = None
                         pass
-                    #self.list_of_user_dic.append(user_obj)
-                    #self.list_of_tweets_dic.append(tweet_obj)
                     self.write_to_sql_server(tweet_obj)
                     self.write_to_mongodb(user_obj)
-                    print(count)
-                    count += 1
     
     def write_to_sql_server(self, tweet_obj):
 
