@@ -121,6 +121,6 @@ class DataProcessor:
         collection = db['Users']
         collection.update_one({"user_id": user_obj["user_id"]}, {"$set": user_obj}, upsert=True)
 # Usage
-file_path = '/dbfs/FileStore/shared_uploads/as4622@scarletmail.rutgers.edu/corona_out_3'
+file_path = '/dbfs/FileStore/shared_uploads/as4622@scarletmail.rutgers.edu/corona_out_3.txt'
 data_processor = DataProcessor(spark, file_path)
 data_processor.process_data()
