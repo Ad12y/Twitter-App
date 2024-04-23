@@ -91,7 +91,7 @@ class DataProcessor:
     
     def write_to_sql_server(self):
         df_tweet = self.spark.createDataFrame(data = self.list_of_tweets_dic).dropDuplicates(['tweet_id'])
-        jdbc_url = "jdbc:sqlserver://twitterdb.database.windows.net:1433;database=Twitter_db;user=CloudSAbf912dc9@twitterdb;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30"
+        jdbc_url = "jdbc:sqlserver://twitterdb1.database.windows.net:1433;database=dbms;user=dbms@twitterdb1;password=Gateway!123;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;"
         connection_properties = {
             "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver"
         }
@@ -107,7 +107,8 @@ class DataProcessor:
         print("Data loaded into MongoDB successfully.")
 
 # Usage
-file_path = '/dbfs/FileStore/shared_uploads/as4622@scarletmail.rutgers.edu/corona_out_3'
+
+file_path = '/dbfs/FileStore/shared_uploads/as4622@scarletmail.rutgers.edu/corona_out_3.txt'
 data_processor = DataProcessor(spark, file_path)
 data_processor.process_data()
 data_processor.write_to_sql_server()
